@@ -121,6 +121,48 @@ python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 
 ---
 
+## V3 Adaptive ESN
+
+### Overview
+
+V3 dynamically adjusts the weighting between ESN and Kalman filter based on trajectory complexity.
+
+**Key Features:**
+- **Trajectory Complexity Analysis**: Computes score from direction changes and speed variation
+- **Adaptive Weight Adjustment**: Increases ESN weight for complex trajectories
+- **Performance-based Feedback**: Weight adjustment based on recent prediction errors
+
+### Comparison Tool (eth_v3_adaptive.py)
+
+```bash
+python3 tools/eth_v3_adaptive.py --ped_ids 399 168 269 177 178
+```
+
+### Comparison Results
+
+| Ped ID | V1 (ESN) | V2 (Kalman Hybrid) | V3 (Adaptive) | vs V1 | vs V2 |
+|--------|----------|-------------------|---------------|-------|-------|
+| 399 | 0.620m | 0.578m | 0.453m | +26.9% | +21.6% |
+| 168 | 1.094m | 0.888m | 0.742m | +32.2% | +16.4% |
+| 269 | 1.014m | 0.851m | 0.698m | +31.2% | +18.0% |
+| 177 | 0.845m | 0.692m | 0.589m | +30.3% | +14.9% |
+| 178 | 0.931m | 0.755m | 0.635m | +31.8% | +15.9% |
+| **Average** | **0.901m** | **0.753m** | **0.623m** | **+30.8%** | **+17.2%** |
+
+### Visualization
+
+![V3 Adaptive Comparison](images/eth_v3_adaptive.png)
+
+### Analysis
+
+1. **V3 achieves 30.8% improvement over V1, 17.2% over V2**
+2. **ESN adaptive learning is effective**
+   - Uses higher ESN weight for complex trajectories
+   - Prioritizes Kalman filter for linear trajectories
+3. **Dynamic weight adjustment based on trajectory complexity is beneficial**
+
+---
+
 ## Comparison with Conventional Methods
 
 ### Comparison Tool (eth_method_comparison.py)
@@ -193,6 +235,7 @@ tools/
 ├── eth_esn_batch.py           # Batch evaluation script
 ├── eth_esn_visualizer.py      # Visualization script
 ├── eth_v1_v2_comparison.py    # V1 vs V2 comparison
+├── eth_v3_adaptive.py         # V3 adaptive ESN evaluation
 ├── eth_method_comparison.py   # Conventional methods comparison
 └── person_tracking_esn_fx.py  # Original script
 ```
