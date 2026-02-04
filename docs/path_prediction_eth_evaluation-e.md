@@ -466,6 +466,47 @@ python3 tools/disturbance_response_test.py --n_trials 3 --future_horizon 20
 
 ---
 
+## LSM (Liquid State Machine) Comparison (Key Finding)
+
+Comparison between spiking neural network-based LSM and ESN.
+
+### Test Tool
+
+```bash
+python3 tools/lsm_trajectory_test.py --n_trials 3 --future_horizon 20
+```
+
+### Results
+
+| Trajectory | Kalman | ESN | LSM | Best | LSM vs ESN |
+|------------|--------|-----|-----|------|------------|
+| Linear | **0.041** | 0.067 | 0.051 | Kalman | +24.5% |
+| Circle | 0.871 | 1.836 | 1.701 | Linear | +7.4% |
+| **Lorenz (Chaotic)** | 2.109 | 1.790 | **1.581** | **LSM** | **+11.7%** |
+| **Nonlinear Pendulum** | 14.085 | 18.665 | **9.734** | **LSM** | **+47.8%** |
+| **Random Walk** | 0.788 | 1.155 | **0.775** | **LSM** | **+32.9%** |
+
+### Key Findings
+
+1. **LSM outperforms ESN in all cases** (especially 47.8% improvement on nonlinear pendulum)
+2. **For non-linear dynamics**, LSM achieves best results (beats Kalman too)
+3. **Spiking neurons** provide effective temporal information processing
+
+### LSM Advantages
+
+- Sparse, event-driven computation
+- Better temporal pattern recognition through spike timing
+- More biologically plausible dynamics
+- Potentially more suitable for neuromorphic hardware
+
+### Implications
+
+- For **chaotic and non-linear trajectories**, consider LSM over ESN
+- LSM may be particularly effective for **robot control** applications
+- Future work: Test LSM with QuantumCore acceleration
+
+---
+
 ## Comparison with Conventional Methods
 
 ### Comparison Tool (eth_method_comparison.py)

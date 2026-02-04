@@ -182,6 +182,31 @@ python3 tools/nonlinear_trajectory_test.py --n_trials 3 --future_horizon 20
 python3 tools/disturbance_response_test.py --n_trials 3 --future_horizon 20
 ```
 
+### LSM (Liquid State Machine) との比較（重要な発見）
+
+スパイキングニューラルネットワークベースのLSMとESNを比較。
+
+#### 結果
+
+| 軌跡タイプ | Kalman | ESN | LSM | Best | LSM vs ESN |
+|-----------|--------|-----|-----|------|------------|
+| Linear | **0.041** | 0.067 | 0.051 | Kalman | +24.5% |
+| Circle | 0.871 | 1.836 | 1.701 | Linear | +7.4% |
+| **Lorenz (カオス)** | 2.109 | 1.790 | **1.581** | **LSM** | **+11.7%** |
+| **非線形振り子** | 14.085 | 18.665 | **9.734** | **LSM** | **+47.8%** |
+| **Random Walk** | 0.788 | 1.155 | **0.775** | **LSM** | **+32.9%** |
+
+#### 結論
+
+- **LSMがESNを全ケースで上回る**（特に非線形振り子で47.8%改善）
+- **非線形ダイナミクス**ではLSMが最良（Kalmanも上回る）
+- **スパイキングニューロン**の時間情報処理が効果的
+
+```bash
+# LSM vs ESN 比較
+python3 tools/lsm_trajectory_test.py --n_trials 3 --future_horizon 20
+```
+
 ## ドキュメント
 
 詳細は [docs/](docs/) を参照してください。
