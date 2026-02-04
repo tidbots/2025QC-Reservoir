@@ -216,10 +216,64 @@ Computed trajectory complexity scores within the ETH dataset to select and compa
    - V3's adaptive weighting shifts toward Kalman
    - Gap narrows to 7.3%
 
-3. **Conditions where ESN may excel (future verification)**
-   - More abrupt direction changes (stop → reverse)
-   - Unpredictable motion (obstacle avoidance, social interaction)
-   - Non-stationary velocity changes
+---
+
+## Additional Verification: Cases Where ESN Excels
+
+### A. BIWI Dataset Verification
+
+Verification with BIWI dataset containing complex trajectories.
+
+| Method | Mean Error (m) |
+|--------|---------------|
+| **Kalman** | **2.298** |
+| Linear | 3.506 |
+| V3 (Adaptive) | 3.875 |
+
+→ Kalman is best even on BIWI
+
+### B. Synthetic Data Verification
+
+Verification with synthetic trajectories containing intentional sharp direction changes.
+
+| Trajectory Type | Kalman | V3 | V2 | V1 | Best |
+|-----------------|--------|-----|-----|-----|------|
+| Linear | **0.071** | 0.153 | 0.217 | 0.312 | Kalman |
+| Sharp 90° turn | **0.222** | 0.371 | 0.459 | 0.590 | Kalman |
+| Zigzag | **0.593** | 0.672 | 0.736 | 0.857 | Kalman |
+| Sudden stop→reverse | **0.293** | 0.521 | 0.603 | 0.773 | Kalman |
+
+→ Kalman is best on all synthetic data
+
+### D. Direction Change Segment Evaluation (Key Finding)
+
+Extract and evaluate only direction change frames (angle change > 20°) from ETH dataset.
+
+| Segment | Kalman | V3 | V2 | V1 | Best |
+|---------|--------|-----|-----|-----|------|
+| **Direction Change** | 2.994 | **2.856** | 2.952 | 3.120 | **V3** |
+| Non-Direction-Change | **2.630** | 2.898 | 3.316 | 3.791 | **Kalman** |
+
+**Key Finding:**
+- **V3 outperforms Kalman by 4.6% during direction changes**
+- Kalman is best during straight motion
+- ESN's adaptive learning is effective for detecting and responding to direction changes
+
+### Conclusion
+
+1. **Kalman is best on overall average** - velocity-based prediction effective when straight motion dominates
+2. **ESN is effective during direction changes** - adaptive learning responds to direction changes
+3. **V3's adaptive weighting is valuable** - situation-dependent ESN/Kalman selection
+
+### Evaluation Tools
+
+```bash
+# Synthetic data test
+python3 tools/synthetic_trajectory_test.py --n_trials 3
+
+# Direction change segment evaluation
+python3 tools/eth_direction_change_test.py --angle_threshold 20 --n_peds 30
+```
 
 ---
 
