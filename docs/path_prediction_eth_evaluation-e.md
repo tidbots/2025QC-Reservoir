@@ -153,13 +153,28 @@ python3 tools/eth_v3_adaptive.py --ped_ids 399 168 269 177 178
 
 ![V3 Adaptive Comparison](images/eth_v3_adaptive.png)
 
+### V3 vs Kalman Alone
+
+| Method | Mean Error (m) | Notes |
+|--------|---------------|-------|
+| **Kalman alone** | **0.509** | Optimal for linear trajectories |
+| V3 (Adaptive) | 0.623 | ESN+Kalman dynamic weighting |
+
+**V3 is -22.4% worse than Kalman alone**
+
 ### Analysis
 
 1. **V3 achieves 30.8% improvement over V1, 17.2% over V2**
-2. **ESN adaptive learning is effective**
-   - Uses higher ESN weight for complex trajectories
-   - Prioritizes Kalman filter for linear trajectories
-3. **Dynamic weight adjustment based on trajectory complexity is beneficial**
+2. **However, still underperforms Kalman alone**
+   - ETH dataset contains mostly linear trajectories
+   - Kalman filter's velocity-based prediction is optimal
+3. **Conditions where ESN may excel**
+   - Trajectories with frequent direction changes
+   - Non-linear motion (curved paths, avoidance behavior)
+   - High speed variation
+4. **Future verification tasks**
+   - Select pedestrians with complex trajectories for evaluation
+   - Compare errors only during direction changes
 
 ---
 
@@ -185,13 +200,14 @@ python3 tools/eth_method_comparison.py --ped_ids 399 168 269 177 178
 
 ### Comparison Results
 
-| Method | Mean Error (m) | vs Linear |
-|--------|---------------|----------|
-| **Kalman** | **0.509** | **+25.6%** |
-| Linear | 0.684 | - |
-| ESN+Kalman | 0.753 | -10.1% |
-| ESN | 0.901 | -31.7% |
-| f(x) avg | 3.443 | -403.5% |
+| Method | Mean Error (m) | vs Linear | vs Kalman |
+|--------|---------------|----------|-----------|
+| **Kalman** | **0.509** | **+25.6%** | - |
+| V3 (Adaptive) | 0.623 | +8.9% | -22.4% |
+| Linear | 0.684 | - | -34.4% |
+| V2 (ESN+Kalman) | 0.753 | -10.1% | -47.9% |
+| V1 (ESN) | 0.901 | -31.7% | -77.0% |
+| f(x) avg | 3.443 | -403.5% | -576.4% |
 
 ### Comparison Visualization
 
