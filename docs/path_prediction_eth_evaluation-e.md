@@ -499,9 +499,21 @@ python3 tools/lsm_trajectory_test.py --n_trials 3 --future_horizon 20
 - More biologically plausible dynamics
 - Potentially more suitable for neuromorphic hardware
 
+### ETH Dataset LSM Evaluation
+
+| Method | Mean Error | vs Kalman |
+|--------|-----------|-----------|
+| **Kalman** | **0.971m** | - |
+| LSM | 1.525m | -57.1% |
+| ESN | 1.743m | -79.6% |
+
+- On ETH (linear pedestrians), Kalman remains optimal
+- **LSM improves over ESN by 12.5%**
+
 ### Implications
 
 - For **chaotic and non-linear trajectories**, consider LSM over ESN
+- For **linear motion**, Kalman is optimal; LSM still beats ESN
 - LSM may be particularly effective for **robot control** applications
 - Future work: Test LSM with QuantumCore acceleration
 
