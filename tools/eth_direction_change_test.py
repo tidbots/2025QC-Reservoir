@@ -135,15 +135,16 @@ class AdaptiveWeightController:
         return np.clip(adaptive_weight, 0.2, 0.9)
 
 
-def create_diverse_esns(n_models=5, base_units=25, seed=42, rls_forgetting=0.99):
+def create_diverse_esns(n_models=5, base_units=50, seed=42, rls_forgetting=0.99):
+    """Create diverse ESN ensemble with optimized parameters."""
     esns = []
     rng = np.random.default_rng(seed)
     for i in range(n_models):
         units = base_units + int(rng.integers(-5, 6))
-        sr = float(rng.uniform(0.8, 0.9))
-        lr = float(rng.uniform(0.35, 0.6))
-        input_scaling = float(rng.uniform(0.2, 0.4))
-        bias = float(rng.uniform(-0.2, 0.2))
+        sr = float(rng.uniform(0.90, 0.98))  # Optimized
+        lr = float(rng.uniform(0.50, 0.70))  # Optimized
+        input_scaling = float(rng.uniform(0.40, 0.60))  # Optimized
+        bias = float(rng.uniform(-0.1, 0.1))
         reservoir = Reservoir(units=units, sr=sr, lr=lr, input_scaling=input_scaling,
                              bias=bias, seed=int(seed + i))
         readout = RLS(forgetting=rls_forgetting)

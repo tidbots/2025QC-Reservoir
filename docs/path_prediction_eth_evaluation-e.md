@@ -292,6 +292,73 @@ python3 tools/eth_direction_change_test.py --angle_threshold 20 --n_peds 30
 
 ---
 
+## Prediction Horizon Comparison
+
+Verification with prediction steps extended from 20 to 50.
+
+### Results
+
+| Horizon | Kalman | ESN only | V3 (Hybrid) |
+|---------|--------|----------|-------------|
+| 20 | **1.93m** | 2.85m (-48%) | 2.21m (-15%) |
+| 30 | **2.89m** | 4.30m (-49%) | 3.34m (-16%) |
+| 40 | **3.91m** | 5.68m (-45%) | 4.48m (-15%) |
+| 50 | **4.95m** | 7.23m (-46%) | 5.70m (-15%) |
+
+### Analysis
+
+- **Kalman maintains superiority even with extended horizon**
+- ESN alone is about 45-50% worse than Kalman
+- V3 (hybrid) is consistently about 15% worse
+
+---
+
+## Full ETH Dataset Evaluation (136 pedestrians)
+
+V3 evaluation with optimized parameters on all data.
+
+### Results
+
+| Method | Mean Error (m) | vs V1 |
+|--------|---------------|-------|
+| **Kalman** | **1.184m** | - |
+| V3 (Adaptive) | 1.316m | +24.9% |
+| V2 (Fixed) | 1.504m | +14.2% |
+| Linear | 1.539m | +12.2% |
+| V1 (ESN) | 1.753m | - |
+
+---
+
+## Final Conclusions
+
+### ETH Dataset Verification Results
+
+1. **Kalman filter is most effective**
+   - Pedestrian motion is essentially linear (approximately constant velocity)
+   - Velocity-based prediction is optimal
+   - Low computational cost
+
+2. **ESN Limitations**
+   - Online learning takes time to converge
+   - Excessive complexity for linear motion
+   - No improvement even with extended prediction horizon
+
+3. **V3 (Adaptive Hybrid) Value**
+   - 24.9% improvement over V1 (ESN alone)
+   - Reduces gap with Kalman to about 15%
+   - Adaptive weighting based on trajectory complexity is effective
+
+### Conditions Where ESN May Be Effective
+
+Not confirmed in this ETH dataset, but potentially effective under:
+
+- More non-linear motion (robot control, complex time series)
+- Data with repetitive patterns
+- Time series with long-term dependencies
+- Acceleration with QuantumCore library
+
+---
+
 ## Comparison with Conventional Methods
 
 ### Comparison Tool (eth_method_comparison.py)
