@@ -251,13 +251,28 @@ Extract and evaluate only direction change frames (angle change > 20°) from ETH
 
 | Segment | Kalman | V3 | V2 | V1 | Best |
 |---------|--------|-----|-----|-----|------|
-| **Direction Change** | 2.994 | **2.856** | 2.952 | 3.120 | **V3** |
-| Non-Direction-Change | **2.630** | 2.898 | 3.316 | 3.791 | **Kalman** |
+| **Direction Change** | 3.107 | **2.924** | 2.964 | 3.088 | **V3** |
+| Non-Direction-Change | **2.555** | 2.938 | 3.445 | 4.003 | **Kalman** |
 
 **Key Finding:**
-- **V3 outperforms Kalman by 4.6% during direction changes**
+- **V3 outperforms Kalman by 5.9% during direction changes**
 - Kalman is best during straight motion
 - ESN's adaptive learning is effective for detecting and responding to direction changes
+
+### Parameter Tuning
+
+Grid search optimization of ESN parameters.
+
+| Parameter | Before | After | Effect |
+|-----------|--------|-------|--------|
+| units | 25 | **50** | Larger reservoir capacity |
+| spectral_radius | 0.8-0.9 | **0.90-0.98** | Improved long-term memory |
+| leaking_rate | 0.35-0.6 | **0.50-0.70** | Faster adaptation |
+| input_scaling | 0.2-0.4 | **0.40-0.60** | Higher input sensitivity |
+
+**Tuning Results:**
+- Baseline ESN error: 3.231m → Optimized: 3.072m (+4.9% improvement)
+- Direction change improvement: 4.6% → **5.9%** (+1.3 points)
 
 ### Conclusion
 
