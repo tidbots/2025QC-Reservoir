@@ -32,3 +32,4 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 - [leg_finder詳細](docs/path_prediction_leg_finder.md) - 脚検出アルゴリズム
 - [ESN経路予測詳細](docs/path_prediction_esn.md) - ESNアルゴリズム
 - [デプロイメント](docs/path_prediction_deployment.md) - Docker設定
+- [可視化ツール](docs/path_prediction_tools.md) - テスト・可視化スクリプト

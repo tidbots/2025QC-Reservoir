@@ -32,3 +32,4 @@ See [docs/](docs/) for detailed documentation.
 - [leg_finder Details](docs/path_prediction_leg_finder-e.md) - Leg detection algorithm
 - [ESN Path Prediction Details](docs/path_prediction_esn-e.md) - ESN algorithm
 - [Deployment](docs/path_prediction_deployment-e.md) - Docker configuration
+- [Visualization Tools](docs/path_prediction_tools-e.md) - Test and visualization scripts
