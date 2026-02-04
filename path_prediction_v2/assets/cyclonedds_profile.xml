@@ -1,0 +1,23 @@
+<CycloneDDS>
+  <Domain>
+    <General>
+      <AllowMulticast>false</AllowMulticast>
+      <EnableMulticastLoopback>false</EnableMulticastLoopback>
+      <MaxMessageSize>65500B</MaxMessageSize>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>100</MaxAutoParticipantIndex>
+      <Peers>
+        <Peer Address="192.168.103.30"/>
+        <Peer Address="localhost"/>
+      </Peers>
+    </Discovery>
+    <Internal>
+      <SocketReceiveBufferSize min="10MB"/>
+      <Watermarks>
+        <WhcHigh>500kB</WhcHigh>
+      </Watermarks>
+    </Internal>
+  </Domain>
+</CycloneDDS>

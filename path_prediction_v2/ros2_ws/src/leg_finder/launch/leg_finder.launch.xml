@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <!-- Arguments -->
+  <arg name="use_sim_time" default="false"/>
+
+  <arg name="laser_scan_topic" default="/scan"/>
+  <arg name="laser_scan_frame" default="base_range_sensor_link"/>
+
+  <group>
+      <push-ros-namespace namespace="hri"/>
+      <!-- Leg Finder -->
+      <node name="leg_finder" 
+            pkg="leg_finder" 
+            exec="leg_finder_node" 
+            output="screen"
+            respawn="true">
+            <param name="scan_downsampling" value="1"/>
+            <param name="show_hypothesis" value="false"/>
+
+            <param name="laser_scan_frame" value="$(var laser_scan_frame)"/>
+            <param name="laser_scan_topic" value="$(var laser_scan_topic)"/>
+      </node>
+  </group>
+
+  <!-- RVIZ2 -->
+  <node name="rviz2"
+        pkg="rviz2"
+        exec="rviz2"
+        args="-d /home/roboworks/ros2_ws/src/leg_finder/launch/rviz/config.rviz
+              --ros-args --log-level rviz2:=warn"
+        output="screen"
+        />
+
+</launch>

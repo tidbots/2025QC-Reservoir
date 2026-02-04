@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  ros2-path-dev:
+    container_name: ros2-path-dev
+    image: tidbots/hsr-ros2:humble-nvidia
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - USER_NAME=${USER_NAME}
+        - GROUP_NAME=${GROUP_NAME}
+        - PASSWORD=${PASSWORD}
+        - UID=${UID}
+        - GID=${GID}
+        - WORKSPACE_DIR=${WORKSPACE_DIR}
+        - DOCKER_DIR=${DOCKER_DIR}
+        - ROBOT_NAME=${ROBOT_NAME}
+        - NETWORK_IF=${NETWORK_IF}
+        - ROS_IP=${ROS_IP}
+        - DOMAIN_ID=${DOMAIN_ID}
+    security_opt:
+      - seccomp:unconfined
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities:
+                - gpu
+    command: terminator
+    network_mode: "host"
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NO_AT_BRIDGE=1
+      - QT_X11_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=/tmp/runtime-${USER_NAME}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/asound.conf:/etc/asound.conf
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/.Xauthority:/home/${USER_NAME}/.Xauthority
+      - ${WORKSPACE_DIR}:${WORKSPACE_DIR}
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+    devices:
+      - /dev/snd:/dev/snd
+      - /dev/dri:/dev/dri
+    privileged: true
+    ipc: host
+    user: "${UID}:${GID}"
+    group_add:
+      - audio
+    tty: true
+    stdin_open: true

@@ -1,0 +1,67 @@
+[global_config]
+  title_receive_bg_color = "#64d8ff"
+  enabled_plugins = TerminalShot, LaunchpadBugURLHandler, LaunchpadCodeURLHandler, APTURLHandler, CustomCommandsMenu, TestPlugin, ActivityWatch, InactivityWatch, MavenPluginURLHandler, Logger
+  title_transmit_bg_color = "#15b0dc"
+[keybindings]
+[profiles]
+  [[default]]
+    use_system_font = False
+    background_darkness = 0.75
+    background_type = transparent
+     scroll_background = False
+    font =　Monospace 24
+    scrollback_infinite = True
+[layouts]
+  [[default]]
+    [[[child0]]]
+      type = Window
+      parent = ""
+      order = 0
+      position = 371:103
+      maximised = False
+      fullscreen = False
+      size = 1054, 787
+    [[[child1]]]
+      type = VPaned
+      parent = child0
+      order = 0
+      position = 391
+      ratio = 0.5
+    [[[terminal2]]]
+      type = Terminal
+      parent = child1
+      order = 0
+      profile = default
+      command = ""
+    [[[terminal3]]]
+      type = Terminal
+      parent = child1
+      order = 1
+      profile = default
+  [[New]]
+    [[[child0]]]
+      type = Window
+      parent = ""
+      order = 0
+      position = 371:103
+      maximised = False
+      fullscreen = False
+      size = 1054, 787
+    [[[child1]]]
+      type = VPaned
+      parent = child0
+      order = 0
+      position = 391
+      ratio = 0.5
+    [[[terminal2]]]
+      type = Terminal
+      parent = child1
+      order = 0
+      profile = default
+      command = ""
+    [[[terminal3]]]
+      type = Terminal
+      parent = child1
+      order = 1
+      profile = default
+ [plugins]
