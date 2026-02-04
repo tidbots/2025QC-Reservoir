@@ -36,9 +36,17 @@ class KalmanHybridESNPredictor:
 | 178 | 0.931m | 0.755m | +18.9% |
 | **平均** | **0.901m** | **0.753m** | **+16.4%** |
 
-### 可視化
+### V1 vs V2 比較グラフ
 
 ![V1 vs V2 Comparison](images/eth_v1_v2_comparison.png)
+
+### 評価サマリー
+
+![ETH Summary](images/eth_summary.png)
+
+### 予測例（歩行者399）
+
+![ETH Pedestrian 399](images/eth_ped_399.png)
 
 ## 試行した他のアプローチ
 
