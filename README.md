@@ -24,6 +24,59 @@
 git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 ```
 
+## 評価経過
+
+### ETHデータセットによる予測精度検証
+
+ETH歩行者追跡データセット（ETH Zurich公開）を使用してESN経路予測の精度を評価。
+
+#### 手法比較結果
+
+| 手法 | 平均誤差 (m) | 備考 |
+|------|-------------|------|
+| **Kalman単体** | **0.509** | 直線軌道に最適 |
+| Linear | 0.684 | 線形外挿 |
+| V3 (Adaptive ESN) | 0.623 | 軌跡複雑度に応じた動的重み調整 |
+| V2 (ESN+Kalman) | 0.753 | 固定重みハイブリッド |
+| V1 (ESN only) | 0.901 | ESNアンサンブル |
+| f(x) avg | 3.443 | RSJ2025 1I5-03の手法（不安定） |
+
+#### バージョン間比較
+
+| Version | 平均誤差 | vs V1 | vs V2 |
+|---------|---------|-------|-------|
+| V1 (ESN only) | 0.901m | - | - |
+| V2 (Kalman Hybrid) | 0.753m | +16.4% | - |
+| V3 (Adaptive) | 0.623m | +30.8% | +17.2% |
+
+#### 現状の知見
+
+1. **カルマンフィルタ単体が最も良い結果** (0.509m)
+   - ETHデータセットの歩行者は比較的直線的な軌跡が多い
+   - 速度ベースの予測が直線移動に最適
+
+2. **V3適応型ESNはV1比30.8%改善**
+   - 軌跡複雑度分析による動的重み調整
+   - 複雑な軌跡ではESN重みを増加、単純な軌跡ではKalman優先
+
+3. **ESNが効果を発揮する条件**（今後の検証課題）
+   - 方向転換が多い軌跡
+   - 非線形な動き（曲線歩行、回避行動）
+   - 速度変動が大きい軌跡
+
+### 評価ツール
+
+```bash
+# V1 vs V2 比較
+python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
+
+# V3 適応型ESN評価
+python3 tools/eth_v3_adaptive.py --ped_ids 399 168 269 177 178
+
+# 従来手法との比較
+python3 tools/eth_method_comparison.py --ped_ids 399 168 269 177 178
+```
+
 ## ドキュメント
 
 詳細は [docs/](docs/) を参照してください。
@@ -33,5 +86,5 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 - [ESN経路予測詳細](docs/path_prediction_esn.md) - ESNアルゴリズム
 - [デプロイメント](docs/path_prediction_deployment.md) - Docker設定
 - [検証ツール](docs/path_prediction_tools.md) - ETHデータセット評価スクリプト
-- [ETHデータセット評価](docs/path_prediction_eth_evaluation.md) - 予測精度の検証結果
+- [ETHデータセット評価](docs/path_prediction_eth_evaluation.md) - 予測精度の検証結果（V1/V2/V3比較含む）
 - [V2改良検証](docs/path_prediction_v2_improvements.md) - カルマンハイブリッドの検証記録
