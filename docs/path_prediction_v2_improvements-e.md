@@ -96,17 +96,110 @@ def _compute_dynamic_horizon(self):
 4. **Better input normalization** - More appropriate scaling
 5. **Ensemble weighting** - Weight models based on error
 
+## Incremental Improvement Validation Results (Feb 2024)
+
+Results from testing recommended approaches one at a time.
+
+### 6. Direction Change Detection Threshold Tuning
+
+**Changes:**
+```python
+def _detect_direction_change(self):
+    # Speed change detection (threshold: 0.08)
+    if abs(norm2 - norm1) > self.speed_thresh:
+        return True
+    # Angle change detection (threshold: 0.5 radians)
+    if np.arccos(cos_angle) > self.angle_thresh:
+        return True
+```
+
+**Result:** Average -9.3% (degradation)
+
+| Pattern | V1 Error | Direction Tuned | Change |
+|---------|----------|-----------------|--------|
+| straight | 0.140m | 0.177m | -26% |
+| curve | 0.154m | 0.172m | -11% |
+| zigzag | 0.272m | 0.296m | -9% |
+| stop_and_go | 0.190m | 0.172m | +9% |
+
+**Analysis:**
+- Improvement only on stop_and_go pattern
+- Degradation on other patterns
+- Further threshold optimization needed
+
+### 7. Kalman Filter Hybridization
+
+**Changes:**
+```python
+class SimpleKalmanFilter:
+    """Kalman Filter for 2D position tracking - State: [x, y, vx, vy]"""
+    def __init__(self, dt=0.1, process_noise=0.1, measurement_noise=0.05):
+        # State transition, measurement, covariance matrices
+
+class KalmanHybridESNPredictor:
+    """ESN + Kalman Filter hybrid"""
+    # Weighted combination: (1 - kalman_weight) * esn_pred + kalman_weight * kalman_pred
+    # kalman_weight = 0.3
+```
+
+**Result:** Average **+18.8%** (improvement) ✓
+
+| Pattern | V1 Error | Kalman Hybrid | Change |
+|---------|----------|---------------|--------|
+| straight | 0.140m | 0.123m | **+12%** |
+| curve | 0.154m | 0.112m | **+27%** |
+| zigzag | 0.272m | 0.245m | **+10%** |
+| stop_and_go | 0.190m | 0.139m | **+26%** |
+
+**Analysis:**
+- Improvement across all patterns
+- Especially effective for curve and stop_and_go
+- Kalman filter smoothing effect is beneficial
+- **Recommended as primary approach**
+
+### 8. Direction Detection + Kalman Hybrid Combined
+
+**Changes:**
+- Direction change detection threshold tuning
+- Kalman filter hybrid
+- Both combined
+
+**Result:** Average +12.7% (improvement)
+
+| Pattern | V1 Error | Combined | Change |
+|---------|----------|----------|--------|
+| straight | 0.140m | 0.147m | -5% |
+| curve | 0.154m | 0.124m | +20% |
+| zigzag | 0.272m | 0.262m | +4% |
+| stop_and_go | 0.190m | 0.128m | **+33%** |
+
+**Analysis:**
+- Best improvement on stop_and_go
+- Slight degradation on straight
+- Less effective than Kalman hybrid alone
+- Direction detection interferes with some patterns
+
+## Incremental Improvement Summary
+
+| Approach | Avg Improvement | Recommended |
+|----------|-----------------|-------------|
+| Direction Tuned | -9.3% | ✗ |
+| **Kalman Hybrid** | **+18.8%** | **✓** |
+| Combined | +12.7% | △ |
+
+**Conclusion:** Kalman filter hybridization is the most effective approach.
+
 ## Recommended Next Steps
 
 ### Short-term (Low Risk)
-1. Tune direction change detection thresholds
-2. Fine-tune adaptation rate (0.35 → 0.4)
-3. Optimize Savitzky-Golay window size
+1. ~~Tune direction change detection thresholds~~ → Limited effect
+2. **Apply Kalman filter hybrid** → Recommended
+3. Optimize Kalman weight parameter (currently 0.3)
 
 ### Medium-term (Medium Risk)
 1. Add input features (velocity only, no acceleration)
-2. Hybridize with Kalman filter
-3. Dynamic prediction horizon adjustment
+2. Dynamic prediction horizon adjustment
+3. Automatic weight adjustment per pattern
 
 ### Long-term (Research Required)
 1. Consider different reservoir structures (beyond ESN)
@@ -120,8 +213,11 @@ path_prediction_v2/
 ├── ros2_ws/src/esn_path_prediction/
 │   └── esn_path_prediction.py  # Original (unchanged)
 tools/
-├── esn_visualizer.py     # V1 validation script
-└── esn_visualizer_v2.py  # V2 comparison script
+├── esn_visualizer.py       # V1 validation script
+├── esn_visualizer_v2.py    # V2 comparison script
+└── esn_improvement_test.py # Incremental improvement test script
+output/
+└── esn_improvements_*.png  # Improvement test visualization
 ```
 
 ## Reproduction
@@ -132,4 +228,7 @@ python3 tools/esn_visualizer.py --pattern all
 
 # V1 vs V2 comparison
 python3 tools/esn_visualizer_v2.py --pattern all
+
+# Incremental improvement test
+python3 tools/esn_improvement_test.py --output output
 ```

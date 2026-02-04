@@ -96,17 +96,110 @@ def _compute_dynamic_horizon(self):
 4. **入力特徴量の正規化改善** - より適切なスケーリング
 5. **アンサンブル重み付け** - エラーベースでモデルを重み付け
 
-## 推奨する次のステップ
+## 漸進的改良の検証結果（2024年2月）
+
+推奨されたアプローチを1つずつ検証した結果。
+
+### 6. 方向転換検出のしきい値チューニング
+
+**変更内容:**
+```python
+def _detect_direction_change(self):
+    # 速度変化の検出（しきい値: 0.08）
+    if abs(norm2 - norm1) > self.speed_thresh:
+        return True
+    # 角度変化の検出（しきい値: 0.5 radians）
+    if np.arccos(cos_angle) > self.angle_thresh:
+        return True
+```
+
+**結果:** 平均 -9.3%（悪化）
+
+| パターン | V1誤差 | Direction Tuned | 変化 |
+|---------|--------|-----------------|------|
+| straight | 0.140m | 0.177m | -26% |
+| curve | 0.154m | 0.172m | -11% |
+| zigzag | 0.272m | 0.296m | -9% |
+| stop_and_go | 0.190m | 0.172m | +9% |
+
+**考察:**
+- stop_and_goパターンでのみ改善
+- 他のパターンでは悪化
+- しきい値のさらなる最適化が必要
+
+### 7. カルマンフィルタとのハイブリッド化
+
+**変更内容:**
+```python
+class SimpleKalmanFilter:
+    """2D位置追跡用カルマンフィルタ - 状態: [x, y, vx, vy]"""
+    def __init__(self, dt=0.1, process_noise=0.1, measurement_noise=0.05):
+        # 状態遷移行列、観測行列、共分散行列
+
+class KalmanHybridESNPredictor:
+    """ESN + カルマンフィルタのハイブリッド"""
+    # 重み付け組み合わせ: (1 - kalman_weight) * esn_pred + kalman_weight * kalman_pred
+    # kalman_weight = 0.3
+```
+
+**結果:** 平均 **+18.8%**（改善）✓
+
+| パターン | V1誤差 | Kalman Hybrid | 変化 |
+|---------|--------|---------------|------|
+| straight | 0.140m | 0.123m | **+12%** |
+| curve | 0.154m | 0.112m | **+27%** |
+| zigzag | 0.272m | 0.245m | **+10%** |
+| stop_and_go | 0.190m | 0.139m | **+26%** |
+
+**考察:**
+- 全パターンで改善
+- curveとstop_and_goで特に効果的
+- カルマンフィルタの平滑化効果が有効
+- **推奨アプローチとして採用**
+
+### 8. 方向転換検出 + カルマンハイブリッドの組み合わせ
+
+**変更内容:**
+- 方向転換検出のしきい値チューニング
+- カルマンフィルタハイブリッド
+- 両方を組み合わせ
+
+**結果:** 平均 +12.7%（改善）
+
+| パターン | V1誤差 | Combined | 変化 |
+|---------|--------|----------|------|
+| straight | 0.140m | 0.147m | -5% |
+| curve | 0.154m | 0.124m | +20% |
+| zigzag | 0.272m | 0.262m | +4% |
+| stop_and_go | 0.190m | 0.128m | **+33%** |
+
+**考察:**
+- stop_and_goで最高の改善
+- straightでわずかに悪化
+- カルマンハイブリッド単体より効果は低い
+- 方向転換検出が一部パターンに干渉
+
+## 漸進的改良サマリー
+
+| アプローチ | 平均改善率 | 推奨 |
+|-----------|-----------|------|
+| Direction Tuned | -9.3% | ✗ |
+| **Kalman Hybrid** | **+18.8%** | **✓** |
+| Combined | +12.7% | △ |
+
+**結論:** カルマンフィルタとのハイブリッドアプローチが最も効果的。
+
+## 今後の推奨ステップ
 
 ### 短期的改善（低リスク）
-1. 方向転換検出のしきい値チューニング
-2. 適応学習率の微調整（0.35→0.4程度）
-3. Savitzky-Golayウィンドウサイズの最適化
+1. ~~方向転換検出のしきい値チューニング~~ → 効果限定的
+2. **カルマンフィルタハイブリッドの適用** → 推奨
+3. カルマンフィルタの重みパラメータ最適化（現在0.3）
 
 ### 中期的改善（中リスク）
 1. 入力特徴量の追加（速度のみ、加速度なし）
-2. カルマンフィルタとのハイブリッド化
-3. 予測ホライズンの動的調整
+2. 予測ホライズンの動的調整
+3. パターン別の重み自動調整
 
 ### 長期的改善（要研究）
 1. 異なるリザバー構造（ESN以外）の検討
@@ -120,8 +213,11 @@ path_prediction_v2/
 ├── ros2_ws/src/esn_path_prediction/
 │   └── esn_path_prediction.py  # オリジナル（変更なし）
 tools/
-├── esn_visualizer.py     # V1検証スクリプト
-└── esn_visualizer_v2.py  # V2比較検証スクリプト
+├── esn_visualizer.py       # V1検証スクリプト
+├── esn_visualizer_v2.py    # V2比較検証スクリプト
+└── esn_improvement_test.py # 漸進的改良検証スクリプト
+output/
+└── esn_improvements_*.png  # 改良検証結果の可視化
 ```
 
 ## 再現方法
@@ -132,4 +228,7 @@ python3 tools/esn_visualizer.py --pattern all
 
 # V1 vs V2比較
 python3 tools/esn_visualizer_v2.py --pattern all
+
+# 漸進的改良検証
+python3 tools/esn_improvement_test.py --output output
 ```
