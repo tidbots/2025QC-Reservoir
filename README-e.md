@@ -25,4 +25,10 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 ```
 
 ## Documentation
+
 See [docs/](docs/) for detailed documentation.
+
+- [path_prediction Overview](docs/path_prediction-e.md) - System overview
+- [leg_finder Details](docs/path_prediction_leg_finder-e.md) - Leg detection algorithm
+- [ESN Path Prediction Details](docs/path_prediction_esn-e.md) - ESN algorithm
+- [Deployment](docs/path_prediction_deployment-e.md) - Docker configuration

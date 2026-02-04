@@ -25,4 +25,10 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 ```
 
 ## ドキュメント
+
 詳細は [docs/](docs/) を参照してください。
+
+- [path_prediction概要](docs/path_prediction.md) - システム概要
+- [leg_finder詳細](docs/path_prediction_leg_finder.md) - 脚検出アルゴリズム
+- [ESN経路予測詳細](docs/path_prediction_esn.md) - ESNアルゴリズム
+- [デプロイメント](docs/path_prediction_deployment.md) - Docker設定
