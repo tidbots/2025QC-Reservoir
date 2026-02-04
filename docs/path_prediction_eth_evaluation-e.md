@@ -359,6 +359,63 @@ Not confirmed in this ETH dataset, but potentially effective under:
 
 ---
 
+## Non-linear Trajectory Test (Key Finding)
+
+To test ESN effectiveness on more non-linear dynamics, synthetic trajectory data was generated.
+
+### Test Tool
+
+```bash
+python3 tools/nonlinear_trajectory_test.py --n_trials 3 --future_horizon 20
+```
+
+### Trajectory Types Tested
+
+| Type | Description |
+|------|-------------|
+| circle | Circular motion (periodic) |
+| figure8 | Figure-8 (Lemniscate) |
+| lissajous | Lissajous curve (3:2 ratio) |
+| spiral | Expanding spiral |
+| sinusoidal | Sinusoidal wave |
+| double_sin | Double sinusoidal (two frequencies) |
+| rosette | 5-petal rosette |
+| lorenz_2d | Lorenz attractor (chaotic) |
+| pendulum | Non-linear pendulum (large angle) |
+| accelerate_decelerate | S-curve motion profile |
+
+### Results: ESN Outperforms Kalman
+
+| Trajectory | Kalman | V3 | V1 | Best | Improvement |
+|------------|--------|-----|-----|------|-------------|
+| **Lorenz 2D (Chaotic)** | 2.108 | 1.820 | **1.642** | V1 | **+22%** |
+| **Non-linear Pendulum** | 14.087 | 11.796 | **10.706** | V1 | **+24%** |
+| Double Sine | 2.947 | **2.811** | 3.005 | V3 | +4.6% |
+| Rosette | 8.618 | **8.410** | 9.361 | V3 | +2.4% |
+
+### Results: Kalman/Linear Better
+
+| Trajectory | Kalman | V3 | Linear | Best |
+|------------|--------|-----|--------|------|
+| Circle | 0.871 | 1.229 | **0.569** | Linear |
+| Sinusoidal | 1.274 | 1.489 | **0.826** | Linear |
+| Accelerate/Decelerate | 0.873 | 1.053 | **0.622** | Linear |
+
+### Key Conclusions
+
+1. **Chaotic dynamics** (Lorenz attractor): ESN (V1) beats Kalman by **22%**
+2. **Non-linear oscillatory systems** (large-angle pendulum): ESN (V1) beats Kalman by **24%**
+3. **Periodic/linear motion**: Linear extrapolation or Kalman is optimal
+4. **ESN's adaptive learning** is most effective when trajectory non-linearity is high
+
+### Implications
+
+- ESN is well-suited for **robot control trajectories** with non-linear dynamics
+- **Chaotic systems** benefit from ESN's ability to learn complex patterns
+- For **pedestrian prediction** (essentially linear), Kalman remains optimal
+
+---
+
 ## Comparison with Conventional Methods
 
 ### Comparison Tool (eth_method_comparison.py)
