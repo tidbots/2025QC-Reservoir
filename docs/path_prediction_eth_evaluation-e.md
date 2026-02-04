@@ -168,13 +168,58 @@ python3 tools/eth_v3_adaptive.py --ped_ids 399 168 269 177 178
 2. **However, still underperforms Kalman alone**
    - ETH dataset contains mostly linear trajectories
    - Kalman filter's velocity-based prediction is optimal
-3. **Conditions where ESN may excel**
-   - Trajectories with frequent direction changes
-   - Non-linear motion (curved paths, avoidance behavior)
-   - High speed variation
-4. **Future verification tasks**
-   - Select pedestrians with complex trajectories for evaluation
-   - Compare errors only during direction changes
+
+---
+
+## Complex vs Linear Trajectory Comparison
+
+### Pedestrian Selection by Trajectory Complexity
+
+Computed trajectory complexity scores within the ETH dataset to select and compare the most complex and most linear trajectories.
+
+**Complexity Score Calculation:**
+- Direction changes (average angle, maximum angle)
+- Speed variation (coefficient of variation)
+- Score = 0.6 × direction_score + 0.4 × speed_score
+
+**Selected Pedestrians:**
+
+| Group | Pedestrian IDs | Characteristics |
+|-------|---------------|-----------------|
+| Complex | 68, 90, 165, 399, 116 | Max angle >150°, sharp direction changes |
+| Linear | 280, 248, 249, 273, 87 | Max angle <30°, mostly straight |
+
+### Comparison Results
+
+| Method | Complex (m) | Linear (m) |
+|--------|-------------|------------|
+| **Kalman** | **1.075** | **1.107** |
+| V3 (Adaptive) | 1.523 | 1.188 |
+| V2 (ESN+Kalman) | 1.903 | 1.309 |
+| V1 (ESN) | 2.375 | 1.477 |
+| Linear | 1.644 | 1.116 |
+
+### V3 vs Kalman Gap
+
+| Trajectory Type | Kalman | V3 | V3 Deficit |
+|-----------------|--------|-----|------------|
+| Complex | 1.075m | 1.523m | **-41.6%** |
+| Linear | 1.107m | 1.188m | **-7.3%** |
+
+### Analysis
+
+1. **Kalman outperforms even on complex trajectories**
+   - ETH's "complex" trajectories can still be handled by Kalman's velocity-based prediction
+   - Direction changes are smooth with gradual velocity changes
+
+2. **V3 approaches Kalman on linear trajectories**
+   - V3's adaptive weighting shifts toward Kalman
+   - Gap narrows to 7.3%
+
+3. **Conditions where ESN may excel (future verification)**
+   - More abrupt direction changes (stop → reverse)
+   - Unpredictable motion (obstacle avoidance, social interaction)
+   - Non-stationary velocity changes
 
 ---
 
