@@ -35,3 +35,4 @@ See [docs/](docs/) for detailed documentation.
 - [Visualization Tools](docs/path_prediction_tools-e.md) - Test and visualization scripts
 - [Validation Results](docs/path_prediction_results-e.md) - ESN prediction accuracy results
 - [V2 Improvements](docs/path_prediction_v2_improvements-e.md) - Improvement validation records
+- [ETH Dataset Evaluation](docs/path_prediction_eth_evaluation-e.md) - Real data validation

@@ -69,3 +69,53 @@ predictor = ESNPredictor(
     future_horizon=20   # Prediction steps
 )
 ```
+
+---
+
+## ETH Dataset Tools
+
+Evaluation and visualization tools using the ETH pedestrian tracking dataset.
+
+See [ETH Dataset Evaluation](path_prediction_eth_evaluation-e.md) for details.
+
+### Batch Evaluation (eth_esn_batch.py)
+
+Evaluate ESN prediction accuracy without GUI.
+
+```bash
+# Default evaluation
+python3 tools/eth_esn_batch.py
+
+# Specify pedestrian IDs
+python3 tools/eth_esn_batch.py --ped_ids 399 168 269
+```
+
+### Visualization (eth_esn_visualizer.py)
+
+Visualize prediction results on ETH dataset.
+
+```bash
+python3 tools/eth_esn_visualizer.py --ped_ids 399 168 269
+```
+
+**Output:**
+- Trajectory and predictions for each pedestrian
+- Prediction comparisons at multiple frames
+- Statistical summary
+
+---
+
+## Improvement Test Tool (esn_improvement_test.py)
+
+Validate incremental improvement approaches.
+
+```bash
+python3 tools/esn_improvement_test.py --output output
+```
+
+**Validates:**
+- Direction change detection tuning
+- Kalman filter hybrid
+- Combined approach
+
+See [V2 Improvements](path_prediction_v2_improvements-e.md) for details.

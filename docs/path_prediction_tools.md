@@ -69,3 +69,53 @@ predictor = ESNPredictor(
     future_horizon=20   # 予測ステップ数
 )
 ```
+
+---
+
+## ETH Dataset Tools
+
+ETH歩行者追跡データセットを使用した評価・可視化ツール。
+
+詳細は [ETHデータセット評価](path_prediction_eth_evaluation.md) を参照してください。
+
+### バッチ評価 (eth_esn_batch.py)
+
+GUIなしでESN予測精度を評価。
+
+```bash
+# デフォルト評価
+python3 tools/eth_esn_batch.py
+
+# 歩行者ID指定
+python3 tools/eth_esn_batch.py --ped_ids 399 168 269
+```
+
+### 可視化 (eth_esn_visualizer.py)
+
+ETHデータセットでの予測結果を可視化。
+
+```bash
+python3 tools/eth_esn_visualizer.py --ped_ids 399 168 269
+```
+
+**出力:**
+- 歩行者ごとの軌跡と予測結果
+- 複数フレームでの予測比較
+- 統計サマリー
+
+---
+
+## 改良検証ツール (esn_improvement_test.py)
+
+漸進的な改良アプローチを検証。
+
+```bash
+python3 tools/esn_improvement_test.py --output output
+```
+
+**検証内容:**
+- 方向転換検出のチューニング
+- カルマンフィルタハイブリッド
+- 複合アプローチ
+
+詳細は [V2改良検証](path_prediction_v2_improvements.md) を参照。

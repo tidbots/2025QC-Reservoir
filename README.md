@@ -35,3 +35,4 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 - [可視化ツール](docs/path_prediction_tools.md) - テスト・可視化スクリプト
 - [検証結果](docs/path_prediction_results.md) - ESN予測精度の検証結果
 - [V2改良検証](docs/path_prediction_v2_improvements.md) - 改良アプローチの検証記録
+- [ETHデータセット評価](docs/path_prediction_eth_evaluation.md) - 実データによる検証
