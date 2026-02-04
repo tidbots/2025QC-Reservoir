@@ -121,6 +121,60 @@ python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 
 ---
 
+## Comparison with Conventional Methods
+
+### Comparison Tool (eth_method_comparison.py)
+
+Compare ESN with conventional trajectory prediction methods.
+
+```bash
+python3 tools/eth_method_comparison.py --ped_ids 399 168 269 177 178
+```
+
+### Compared Methods
+
+| Method | Description | Source |
+|--------|-------------|--------|
+| Linear | Linear extrapolation | - |
+| f(x) avg | Linear + Parabola + Sigmoid average | RSJ2025 1I5-03 |
+| Kalman | Kalman filter only | - |
+| ESN | Echo State Network ensemble | - |
+| ESN+Kalman | ESN + Kalman hybrid | This project |
+
+### Comparison Results
+
+| Method | Mean Error (m) | vs Linear |
+|--------|---------------|----------|
+| **Kalman** | **0.509** | **+25.6%** |
+| Linear | 0.684 | - |
+| ESN+Kalman | 0.753 | -10.1% |
+| ESN | 0.901 | -31.7% |
+| f(x) avg | 3.443 | -403.5% |
+
+### Comparison Visualization
+
+![Method Comparison](images/eth_method_comparison.png)
+
+### Analysis
+
+1. **Kalman filter alone** achieves best results
+   - Velocity-based prediction effective for linear pedestrian motion
+   - Low computational cost
+
+2. **f(x) average** is unstable
+   - Sigmoid fitting diverges in some cases
+   - Paper method effective under specific conditions but limited generality
+
+3. **ESN+Kalman** improves over ESN alone
+   - Kalman filter stability complements ESN prediction
+   - ESN adaptive learning may help with complex trajectories
+
+4. **ESN alone** can underperform conventional methods
+   - Online learning needs time to converge
+   - Possible overfitting on simple linear trajectories
+
+---
+
 ## Analysis
 
 ### ESN Applicability
@@ -138,6 +192,8 @@ tools/
 │   └── biwi_eth.txt           # BIWI dataset
 ├── eth_esn_batch.py           # Batch evaluation script
 ├── eth_esn_visualizer.py      # Visualization script
+├── eth_v1_v2_comparison.py    # V1 vs V2 comparison
+├── eth_method_comparison.py   # Conventional methods comparison
 └── person_tracking_esn_fx.py  # Original script
 ```
 
@@ -145,3 +201,4 @@ tools/
 
 - ETH Walking Pedestrians Dataset: https://icu.ee.ethz.ch/research/datsets.html
 - Pellegrini, S., et al. "You'll Never Walk Alone: Modeling Social Behavior for Multi-target Tracking." ICCV 2009.
+- Ono, Choi. "Pedestrian Avoidance by MPPI Control using 4WIDS Omnidirectional Mobile Robot." RSJ2025, 1I5-03. (Reference for f(x) prediction method)

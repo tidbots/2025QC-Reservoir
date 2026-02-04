@@ -121,6 +121,60 @@ python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 
 ---
 
+## 従来手法との比較
+
+### 比較ツール (eth_method_comparison.py)
+
+ESNと従来の軌道予測手法を比較。
+
+```bash
+python3 tools/eth_method_comparison.py --ped_ids 399 168 269 177 178
+```
+
+### 比較手法
+
+| 手法 | 説明 | 出典 |
+|-----|------|------|
+| Linear | 線形外挿 | - |
+| f(x) avg | 線形+放物線+シグモイドの平均 | RSJ2025 1I5-03 |
+| Kalman | カルマンフィルタのみ | - |
+| ESN | Echo State Network アンサンブル | - |
+| ESN+Kalman | ESN + カルマンハイブリッド | 本プロジェクト |
+
+### 比較結果
+
+| 手法 | 平均誤差 (m) | vs Linear |
+|-----|-------------|----------|
+| **Kalman** | **0.509** | **+25.6%** |
+| Linear | 0.684 | - |
+| ESN+Kalman | 0.753 | -10.1% |
+| ESN | 0.901 | -31.7% |
+| f(x) avg | 3.443 | -403.5% |
+
+### 比較可視化
+
+![Method Comparison](images/eth_method_comparison.png)
+
+### 考察
+
+1. **カルマンフィルタ単体**が最も良い結果
+   - 速度ベースの予測が歩行者の直線的な動きに有効
+   - 計算コストも低い
+
+2. **f(x)平均**は不安定
+   - シグモイドフィッティングが発散するケースあり
+   - 論文の手法は特定条件下では有効だが汎用性に課題
+
+3. **ESN+Kalman**はESN単体より改善
+   - カルマンフィルタの安定性がESNの予測を補完
+   - 複雑な軌跡ではESNの適応学習が有効な可能性
+
+4. **ESN単体**は従来手法より劣る場合あり
+   - オンライン学習の収束に時間が必要
+   - 単純な直線軌道では過学習の可能性
+
+---
+
 ## 考察
 
 ### ESNの適用性
@@ -138,6 +192,8 @@ tools/
 │   └── biwi_eth.txt           # BIWIデータセット
 ├── eth_esn_batch.py           # バッチ評価スクリプト
 ├── eth_esn_visualizer.py      # 可視化スクリプト
+├── eth_v1_v2_comparison.py    # V1 vs V2比較
+├── eth_method_comparison.py   # 従来手法との比較
 └── person_tracking_esn_fx.py  # オリジナルスクリプト
 ```
 
@@ -145,3 +201,4 @@ tools/
 
 - ETH Walking Pedestrians Dataset: https://icu.ee.ethz.ch/research/datsets.html
 - Pellegrini, S., et al. "You'll Never Walk Alone: Modeling Social Behavior for Multi-target Tracking." ICCV 2009.
+- 小野, 崔. "四輪独立駆動型全方向移動ロボットを用いたMPPI制御による歩行者回避." RSJ2025, 1I5-03. (f(x)予測手法の参考)
