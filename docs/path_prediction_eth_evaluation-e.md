@@ -416,6 +416,56 @@ python3 tools/nonlinear_trajectory_test.py --n_trials 3 --future_horizon 20
 
 ---
 
+## Disturbance Response Test (Key Finding)
+
+Evaluating prediction performance under sudden, unpredictable disturbances.
+
+### Test Tool
+
+```bash
+python3 tools/disturbance_response_test.py --n_trials 3 --future_horizon 20
+```
+
+### Disturbance Types Tested
+
+| Type | Description |
+|------|-------------|
+| sudden_obstacle | Sudden 90° turn due to obstacle |
+| random_push | Random external force disturbances |
+| goal_switch | Sudden goal/target change |
+| sudden_stop_reverse | Stop and reverse direction |
+| speed_burst | Sudden speed increases |
+| erratic_motion | Smooth motion with erratic bursts |
+
+### Results: During Disturbance Events
+
+| Disturbance Type | Kalman | V3 | V1 | Best | Improvement |
+|------------------|--------|-----|-----|------|-------------|
+| **Random Push** | 3.471 | 3.037 | **2.892** | V1 | **+12.5%** |
+| **Speed Burst** | 0.721 | **0.674** | 0.678 | V3 | **+6.6%** |
+| Sudden Obstacle | **0.704** | 1.647 | 2.747 | Kalman | - |
+| Goal Switch | **0.634** | 0.919 | 1.263 | Kalman | - |
+| Sudden Stop/Reverse | **0.552** | 0.647 | 0.769 | Kalman | - |
+| Erratic Motion | **1.000** | 1.046 | 1.209 | Kalman | - |
+
+### Key Conclusions
+
+| Disturbance Type | Characteristics | Best Method |
+|------------------|-----------------|-------------|
+| Continuous random forces | Unpredictable but continuous | **ESN** |
+| Sudden but clear changes | Stable after change | **Kalman** |
+
+**ESN Strength**: Online adaptation to continuous disturbances
+**Kalman Strength**: Stable linear prediction after state changes
+
+### Implications
+
+- ESN excels when disturbances are **continuous and random** (e.g., wind, pushing)
+- Kalman excels when disturbances cause **discrete state changes** (e.g., obstacle avoidance)
+- For **robot control** with external forces, ESN may provide better prediction
+
+---
+
 ## Comparison with Conventional Methods
 
 ### Comparison Tool (eth_method_comparison.py)
