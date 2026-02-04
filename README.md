@@ -23,4 +23,8 @@
 ## TID -> QC
 [ROS 2 Leg Finder + Path Prediction (Dockerized)](https://gitlab.com/tidbots/path_prediction)
 
+```
+git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
+```
+
 ### 概要
