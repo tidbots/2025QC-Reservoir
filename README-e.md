@@ -33,3 +33,4 @@ See [docs/](docs/) for detailed documentation.
 - [ESN Path Prediction Details](docs/path_prediction_esn-e.md) - ESN algorithm
 - [Deployment](docs/path_prediction_deployment-e.md) - Docker configuration
 - [Visualization Tools](docs/path_prediction_tools-e.md) - Test and visualization scripts
+- [Validation Results](docs/path_prediction_results-e.md) - ESN prediction accuracy results

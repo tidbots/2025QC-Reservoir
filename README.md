@@ -33,3 +33,4 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 - [ESN経路予測詳細](docs/path_prediction_esn.md) - ESNアルゴリズム
 - [デプロイメント](docs/path_prediction_deployment.md) - Docker設定
 - [可視化ツール](docs/path_prediction_tools.md) - テスト・可視化スクリプト
+- [検証結果](docs/path_prediction_results.md) - ESN予測精度の検証結果
