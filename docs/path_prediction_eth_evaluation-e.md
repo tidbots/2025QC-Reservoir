@@ -4,7 +4,7 @@ Validation of ESN path prediction using the ETH pedestrian tracking dataset.
 
 ## Overview
 
-The ETH dataset is a pedestrian tracking benchmark published by ETH Zurich. Using real pedestrian trajectory data enables more realistic evaluation compared to simulation patterns.
+The ETH dataset is a pedestrian tracking benchmark published by ETH Zurich. Using real pedestrian trajectory data to evaluate ESN path prediction accuracy.
 
 ## Datasets
 
@@ -115,25 +115,13 @@ python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 
 ### Conclusion
 
-- V2 (Kalman hybrid) shows **16.4% average improvement** on real data
-- Similar to simulation results (+18.8%)
+- V2 (Kalman hybrid) shows **16.4% average improvement**
 - Improvement confirmed across all pedestrians
+- Kalman filter smoothing effect is beneficial
 
 ---
 
 ## Analysis
-
-### Comparison with Simulation
-
-| Evaluation Method | Mean Error | Prediction Horizon |
-|-------------------|------------|-------------------|
-| Simulation (synthetic patterns) | 0.14-0.27m | 20 steps |
-| ETH Dataset | 0.62-1.09m | 20 steps |
-
-Reasons for larger errors on ETH dataset:
-1. **Coordinate scale**: ETH uses real-world meters (~15m range)
-2. **Trajectory complexity**: Real pedestrians make unpredictable movements
-3. **Speed variation**: Frequent stops, accelerations, direction changes
 
 ### ESN Applicability
 

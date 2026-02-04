@@ -1,121 +1,127 @@
-# Visualization Tools
+# Validation Tools
 
-## ESN Visualizer
+ESN path prediction validation and visualization tools using the ETH pedestrian tracking dataset.
 
-Standalone script to test and visualize the ESN path prediction algorithm without ROS.
+## ETH Dataset
 
-**File:** `tools/esn_visualizer.py`
+### Data Files
+
+| File | Description |
+|------|-------------|
+| `tools/data/students001_train.txt` | ETH campus pedestrian data |
+| `tools/data/biwi_eth.txt` | BIWI dataset |
+
+### Data Format
+
+```
+frame  ped_id  x  y
+```
+- frame: Frame number
+- ped_id: Pedestrian ID
+- x, y: Position coordinates (meters)
+
+---
+
+## Batch Evaluation (eth_esn_batch.py)
+
+Evaluate ESN prediction accuracy without GUI.
 
 ### Usage
 
 ```bash
-# Test all patterns
-python3 tools/esn_visualizer.py --pattern all --output output
-
-# Specific pattern only
-python3 tools/esn_visualizer.py --pattern straight --output output
-```
-
-### Test Patterns
-
-| Pattern | Description | Characteristics |
-|---------|-------------|-----------------|
-| `straight` | Straight walking | Small lateral sway |
-| `curve` | Curved walking | Arc trajectory |
-| `zigzag` | Zigzag walking | Periodic lateral movement |
-| `stop_and_go` | Stop and go | Includes stop periods |
-
-### Output
-
-Generates PNG images with 4 graphs for each pattern:
-
-1. **Overall Trajectory and Predictions** - Actual trajectory (blue) and predictions (red)
-2. **Prediction Detail** - Comparison of past, current, future, and prediction at specific time
-3. **Prediction Error Over Time** - Error changes over time series
-4. **Accuracy by Component** - Prediction accuracy per X/Y component
-
-### Implementation
-
-The script includes standalone implementations of:
-
-- `SimpleESN` - Simple Echo State Network implementation
-- `OnlineStandardizer` - Online Z-score normalization
-- `ESNPredictor` - ESN predictor (ROS independent)
-
-These reproduce the algorithms from `esn_path_prediction.py`.
-
-### Example Results
-
-**Prediction Accuracy (Mean Error):**
-
-| Pattern | Mean Error | Std Dev |
-|---------|------------|---------|
-| straight | ~0.13 m | ~0.09 m |
-| curve | ~0.21 m | ~0.18 m |
-| zigzag | ~0.36 m | ~0.25 m |
-| stop_and_go | ~0.18 m | ~0.18 m |
-
-*Results vary due to random seed
-
-### Customization
-
-`ESNPredictor` class parameters can be modified:
-
-```python
-predictor = ESNPredictor(
-    n_models=10,        # Number of ESNs
-    warmup=5,           # Warmup samples
-    window=20,          # History window size
-    future_horizon=20   # Prediction steps
-)
-```
-
----
-
-## ETH Dataset Tools
-
-Evaluation and visualization tools using the ETH pedestrian tracking dataset.
-
-See [ETH Dataset Evaluation](path_prediction_eth_evaluation-e.md) for details.
-
-### Batch Evaluation (eth_esn_batch.py)
-
-Evaluate ESN prediction accuracy without GUI.
-
-```bash
-# Default evaluation
+# Default evaluation (5 pedestrians)
 python3 tools/eth_esn_batch.py
 
 # Specify pedestrian IDs
-python3 tools/eth_esn_batch.py --ped_ids 399 168 269
+python3 tools/eth_esn_batch.py --ped_ids 399 168 269 177 178
+
+# Adjust parameters
+python3 tools/eth_esn_batch.py --n_models 10 --future_horizon 20
 ```
 
-### Visualization (eth_esn_visualizer.py)
+### Parameters
 
-Visualize prediction results on ETH dataset.
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| --data | data/students001_train.txt | Dataset path |
+| --ped_ids | Auto-select | Pedestrian IDs to evaluate |
+| --n_peds | 5 | Number of pedestrians for auto-select |
+| --n_models | 10 | Number of ESN models |
+| --future_horizon | 20 | Prediction steps |
+
+---
+
+## Visualization (eth_esn_visualizer.py)
+
+Visualize prediction results.
+
+### Usage
 
 ```bash
 python3 tools/eth_esn_visualizer.py --ped_ids 399 168 269
 ```
 
-**Output:**
+### Output
+
 - Trajectory and predictions for each pedestrian
 - Prediction comparisons at multiple frames
 - Statistical summary
 
 ---
 
-## Improvement Test Tool (esn_improvement_test.py)
+## V1 vs V2 Comparison (eth_v1_v2_comparison.py)
 
-Validate incremental improvement approaches.
+Compare V1 (original ESN) with V2 (Kalman hybrid).
+
+### Usage
 
 ```bash
-python3 tools/esn_improvement_test.py --output output
+python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 ```
 
-**Validates:**
-- Direction change detection tuning
-- Kalman filter hybrid
-- Combined approach
+### Output
 
-See [V2 Improvements](path_prediction_v2_improvements-e.md) for details.
+- Error comparison by pedestrian
+- Improvement rate visualization
+- Overall summary
+
+---
+
+## Original Script (person_tracking_esn_fx.py)
+
+ESN evaluation script created by colleague. Includes animation feature.
+
+### Usage
+
+```bash
+# Save MP4 animation
+python3 tools/person_tracking_esn_fx.py --save_mp4 --ped_ids 399
+```
+
+---
+
+## PDF Conversion (md2pdf.py)
+
+Convert Markdown documents to PDF.
+
+### Usage
+
+```bash
+python3 tools/md2pdf.py docs/path_prediction_eth_evaluation.md
+```
+
+---
+
+## File Structure
+
+```
+tools/
+├── data/
+│   ├── students001_train.txt    # ETH dataset
+│   └── biwi_eth.txt             # BIWI dataset
+├── eth_esn_batch.py             # Batch evaluation
+├── eth_esn_visualizer.py        # Visualization
+├── eth_v1_v2_comparison.py      # V1 vs V2 comparison
+├── person_tracking_esn_fx.py    # Original script
+└── md2pdf.py                    # PDF conversion
+```

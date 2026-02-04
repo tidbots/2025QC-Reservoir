@@ -32,7 +32,6 @@ git clone --recursive git@github.com:tidbots/2025QC-Reservoir.git
 - [leg_finder詳細](docs/path_prediction_leg_finder.md) - 脚検出アルゴリズム
 - [ESN経路予測詳細](docs/path_prediction_esn.md) - ESNアルゴリズム
 - [デプロイメント](docs/path_prediction_deployment.md) - Docker設定
-- [可視化ツール](docs/path_prediction_tools.md) - テスト・可視化スクリプト
-- [検証結果](docs/path_prediction_results.md) - ESN予測精度の検証結果
-- [V2改良検証](docs/path_prediction_v2_improvements.md) - 改良アプローチの検証記録
-- [ETHデータセット評価](docs/path_prediction_eth_evaluation.md) - 実データによる検証
+- [検証ツール](docs/path_prediction_tools.md) - ETHデータセット評価スクリプト
+- [ETHデータセット評価](docs/path_prediction_eth_evaluation.md) - 予測精度の検証結果
+- [V2改良検証](docs/path_prediction_v2_improvements.md) - カルマンハイブリッドの検証記録

@@ -32,7 +32,6 @@ See [docs/](docs/) for detailed documentation.
 - [leg_finder Details](docs/path_prediction_leg_finder-e.md) - Leg detection algorithm
 - [ESN Path Prediction Details](docs/path_prediction_esn-e.md) - ESN algorithm
 - [Deployment](docs/path_prediction_deployment-e.md) - Docker configuration
-- [Visualization Tools](docs/path_prediction_tools-e.md) - Test and visualization scripts
-- [Validation Results](docs/path_prediction_results-e.md) - ESN prediction accuracy results
-- [V2 Improvements](docs/path_prediction_v2_improvements-e.md) - Improvement validation records
-- [ETH Dataset Evaluation](docs/path_prediction_eth_evaluation-e.md) - Real data validation
+- [Validation Tools](docs/path_prediction_tools-e.md) - ETH dataset evaluation scripts
+- [ETH Dataset Evaluation](docs/path_prediction_eth_evaluation-e.md) - Prediction accuracy results
+- [V2 Improvements](docs/path_prediction_v2_improvements-e.md) - Kalman hybrid validation records

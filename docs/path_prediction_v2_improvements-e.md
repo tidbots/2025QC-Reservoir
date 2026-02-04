@@ -2,134 +2,13 @@
 
 Validation records for prediction accuracy improvements in path_prediction_v2.
 
-## Tested Improvement Approaches
+## Improvement Approach
 
-### 1. Reservoir Size Expansion
+### Kalman Filter Hybrid
 
-**Changes:**
-- V1: 25 units ± 5
-- V2: 50 units ± 8
+Combines ESN predictions with Kalman filter predictions using weighted averaging.
 
-**Result:** Accuracy degradation (-148% to -313%)
-
-**Analysis:**
-- Larger reservoir lacks sufficient training data
-- RLS learning doesn't converge well
-- Longer warmup period needed
-
-### 2. Spectral Radius Adjustment
-
-**Changes:**
-- V1: 0.8-0.9
-- V2: 0.88-0.95
-
-**Result:** Instability
-
-**Analysis:**
-- Higher spectral radius causes chaotic behavior
-- Poor compatibility with online learning
-
-### 3. Enhanced Direction Change Detection
-
-**Changes:**
-```python
-def _detect_direction_change(self):
-    # Distance change detection
-    dist_change = np.linalg.norm(v2 - v1)
-    if dist_change > 0.15:
-        return True
-
-    # Angle change detection
-    angle = np.arccos(cos_angle)
-    if angle > 0.8:  # radians
-        return True
-```
-
-**Result:** Potential improvement
-
-**Analysis:**
-- Angle-based detection is effective
-- Threshold optimization needed
-
-### 4. Dynamic Prediction Horizon
-
-**Changes:**
-```python
-def _compute_dynamic_horizon(self):
-    if speed > 0.08 or speed_var > 0.005:
-        return max(10, base_horizon - 5)  # Shorter for fast/erratic
-    elif speed < 0.02:
-        return min(30, base_horizon + 5)  # Longer for slow
-```
-
-**Result:** Conceptually correct, but effect unclear due to interactions
-
-### 5. Adaptive Learning Boost
-
-**Changes:**
-- Normal damping: 0.5
-- Boost damping: 1.5
-- Boost on error threshold exceeded
-
-**Result:** Learning instability
-
-## Validation Results Summary
-
-| Pattern | V1 Error | V2 Error | Change |
-|---------|----------|----------|--------|
-| straight | 0.208m | 0.516m | -148% |
-| curve | 0.164m | 0.506m | -208% |
-| zigzag | 0.252m | 0.473m | -88% |
-| stop_and_go | 0.122m | 0.505m | -313% |
-
-## Lessons Learned
-
-### Changes That Failed
-1. **Simple reservoir size increase** - Insufficient data for convergence
-2. **Spectral radius increase** - Poor compatibility with online learning
-3. **Increased adaptation rate** - Causes instability
-
-### Approaches to Try Next
-1. **Incremental improvements** - Apply changes one at a time
-2. **Increased warmup data** - Larger reservoir needs more data
-3. **Ridge regression** - More stable than RLS
-4. **Better input normalization** - More appropriate scaling
-5. **Ensemble weighting** - Weight models based on error
-
-## Incremental Improvement Validation Results (Feb 2024)
-
-Results from testing recommended approaches one at a time.
-
-### 6. Direction Change Detection Threshold Tuning
-
-**Changes:**
-```python
-def _detect_direction_change(self):
-    # Speed change detection (threshold: 0.08)
-    if abs(norm2 - norm1) > self.speed_thresh:
-        return True
-    # Angle change detection (threshold: 0.5 radians)
-    if np.arccos(cos_angle) > self.angle_thresh:
-        return True
-```
-
-**Result:** Average -9.3% (degradation)
-
-| Pattern | V1 Error | Direction Tuned | Change |
-|---------|----------|-----------------|--------|
-| straight | 0.140m | 0.177m | -26% |
-| curve | 0.154m | 0.172m | -11% |
-| zigzag | 0.272m | 0.296m | -9% |
-| stop_and_go | 0.190m | 0.172m | +9% |
-
-**Analysis:**
-- Improvement only on stop_and_go pattern
-- Degradation on other patterns
-- Further threshold optimization needed
-
-### 7. Kalman Filter Hybridization
-
-**Changes:**
+**Implementation:**
 ```python
 class SimpleKalmanFilter:
     """Kalman Filter for 2D position tracking - State: [x, y, vx, vy]"""
@@ -138,97 +17,72 @@ class SimpleKalmanFilter:
 
 class KalmanHybridESNPredictor:
     """ESN + Kalman Filter hybrid"""
-    # Weighted combination: (1 - kalman_weight) * esn_pred + kalman_weight * kalman_pred
+    # Weighting: (1 - kalman_weight) * esn_pred + kalman_weight * kalman_pred
     # kalman_weight = 0.3
 ```
 
-**Result:** Average **+18.8%** (improvement) ✓
+**Result:** **+16.4%** improvement on ETH dataset
 
-| Pattern | V1 Error | Kalman Hybrid | Change |
-|---------|----------|---------------|--------|
-| straight | 0.140m | 0.123m | **+12%** |
-| curve | 0.154m | 0.112m | **+27%** |
-| zigzag | 0.272m | 0.245m | **+10%** |
-| stop_and_go | 0.190m | 0.139m | **+26%** |
+## ETH Dataset Validation Results
 
-**Analysis:**
-- Improvement across all patterns
-- Especially effective for curve and stop_and_go
-- Kalman filter smoothing effect is beneficial
-- **Recommended as primary approach**
+### V1 vs V2 Comparison
 
-### 8. Direction Detection + Kalman Hybrid Combined
+| Ped ID | V1 (ESN) | V2 (Kalman Hybrid) | Improvement |
+|--------|----------|-------------------|-------------|
+| 399 | 0.620m | 0.578m | +6.8% |
+| 168 | 1.094m | 0.888m | +18.8% |
+| 269 | 1.014m | 0.851m | +16.1% |
+| 177 | 0.845m | 0.692m | +18.1% |
+| 178 | 0.931m | 0.755m | +18.9% |
+| **Average** | **0.901m** | **0.753m** | **+16.4%** |
 
-**Changes:**
-- Direction change detection threshold tuning
-- Kalman filter hybrid
-- Both combined
+### Visualization
 
-**Result:** Average +12.7% (improvement)
+![V1 vs V2 Comparison](images/eth_v1_v2_comparison.png)
 
-| Pattern | V1 Error | Combined | Change |
-|---------|----------|----------|--------|
-| straight | 0.140m | 0.147m | -5% |
-| curve | 0.154m | 0.124m | +20% |
-| zigzag | 0.272m | 0.262m | +4% |
-| stop_and_go | 0.190m | 0.128m | **+33%** |
+## Other Approaches Tried
 
-**Analysis:**
-- Best improvement on stop_and_go
-- Slight degradation on straight
-- Less effective than Kalman hybrid alone
-- Direction detection interferes with some patterns
+The following approaches showed limited or negative effect and were not adopted:
 
-## Incremental Improvement Summary
+### 1. Reservoir Size Expansion
+- V1: 25 units → V2: 50 units
+- Result: Accuracy degradation (insufficient training data)
 
-| Approach | Avg Improvement | Recommended |
-|----------|-----------------|-------------|
-| Direction Tuned | -9.3% | ✗ |
-| **Kalman Hybrid** | **+18.8%** | **✓** |
-| Combined | +12.7% | △ |
+### 2. Spectral Radius Increase
+- V1: 0.8-0.9 → V2: 0.88-0.95
+- Result: Instability (poor compatibility with online learning)
 
-**Conclusion:** Kalman filter hybridization is the most effective approach.
+### 3. Direction Change Detection Tuning
+- Angle and speed threshold detection
+- Result: Effective only for some patterns
 
-## Recommended Next Steps
+## Conclusion
 
-### Short-term (Low Risk)
-1. ~~Tune direction change detection thresholds~~ → Limited effect
-2. **Apply Kalman filter hybrid** → Recommended
-3. Optimize Kalman weight parameter (currently 0.3)
-
-### Medium-term (Medium Risk)
-1. Add input features (velocity only, no acceleration)
-2. Dynamic prediction horizon adjustment
-3. Automatic weight adjustment per pattern
-
-### Long-term (Research Required)
-1. Consider different reservoir structures (beyond ESN)
-2. Compare with deep learning predictors
-3. Evaluate on real data
+- **Kalman filter hybrid** is the most effective improvement
+- Combination of ESN's short-term prediction and Kalman filter's smoothing effect is effective
+- 16.4% improvement confirmed on real data (ETH dataset)
 
 ## File Structure
 
 ```
-path_prediction_v2/
-├── ros2_ws/src/esn_path_prediction/
-│   └── esn_path_prediction.py  # Original (unchanged)
 tools/
-├── esn_visualizer.py       # V1 validation script
-├── esn_visualizer_v2.py    # V2 comparison script
-└── esn_improvement_test.py # Incremental improvement test script
-output/
-└── esn_improvements_*.png  # Improvement test visualization
+├── eth_esn_batch.py           # Batch evaluation script
+├── eth_esn_visualizer.py      # Visualization script
+├── eth_v1_v2_comparison.py    # V1 vs V2 comparison script
+└── data/
+    ├── students001_train.txt  # ETH dataset
+    └── biwi_eth.txt           # BIWI dataset
 ```
 
 ## Reproduction
 
 ```bash
-# V1 only validation
-python3 tools/esn_visualizer.py --pattern all
-
 # V1 vs V2 comparison
-python3 tools/esn_visualizer_v2.py --pattern all
+python3 tools/eth_v1_v2_comparison.py --ped_ids 399 168 269 177 178
 
-# Incremental improvement test
-python3 tools/esn_improvement_test.py --output output
+# Batch evaluation
+python3 tools/eth_esn_batch.py --ped_ids 399 168 269
+
+# Visualization
+python3 tools/eth_esn_visualizer.py --ped_ids 399 168 269
 ```
