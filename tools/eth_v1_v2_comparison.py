@@ -92,14 +92,21 @@ class SimpleKalmanFilter:
             predictions.append(x_temp[:2].copy())
         return np.array(predictions)
 
-
+# ----------------------------
+# ETH Dataset Loader/Streamer
+# ----------------------------
 def load_eth_dataset(path):
     df = pd.read_csv(path, sep="\t", header=None)
     df.columns = ["frame", "ped_id", "x", "y"]
     return df
 
-
+# ----------------------------
+# Create multiple ESNs.
+# ----------------------------
 def create_diverse_esns(n_models=5, base_units=25, seed=42, rls_forgetting=0.99):
+    """
+    Drop-in ESN creation: stable ranges but slightly shorter memory (lower sr, higher leak).
+    """
     esns = []
     rng = np.random.default_rng(seed)
     for i in range(n_models):
@@ -119,7 +126,9 @@ def create_diverse_esns(n_models=5, base_units=25, seed=42, rls_forgetting=0.99)
         esns.append(esn)
     return esns
 
-
+# ----------------------------
+# Online ESN with Ridge
+# ----------------------------
 def evaluate_v1(traj, warmup=5, window=20, n_models=10, future_horizon=20, seed=42):
     """V1: Original ESN only."""
     if len(traj) < warmup + future_horizon + 10:
@@ -127,6 +136,7 @@ def evaluate_v1(traj, warmup=5, window=20, n_models=10, future_horizon=20, seed=
 
     esns = create_diverse_esns(n_models=n_models, base_units=25, seed=seed)
 
+    history = traj[:warmup].tolist()
     warmup_buffer = traj[:warmup]
     X_warm = warmup_buffer[:-1]
     Y_warm = warmup_buffer[1:] - warmup_buffer[:-1]
@@ -143,26 +153,51 @@ def evaluate_v1(traj, warmup=5, window=20, n_models=10, future_horizon=20, seed=
     for esn in esns:
         esn.partial_fit(X_w_s, Y_w_s)
 
+    # --- Adaptation config ---
     adapt_window = 5
     delta_window = 6
-    adapt_damping = 0.35
+    sudden_change_thresh = 0.6
+    adapt_damping_nominal = 0.35
+    adapt_damping_boost = 1.0
+    boost_frames = 6
+    boost_error_thresh = 0.5
+    state_clip = 5.0
+    wout_clip = 8.0
     err_clip = 1.0
+
+    # per-ESN running error buffers and boost counters
+    err_deques = [deque(maxlen=8) for _ in esns]
+    boost_counters = [0 for _ in esns]
 
     errors = []
     window_buffer = list(warmup_buffer)
 
     for frame_idx in range(warmup, len(traj) - future_horizon):
         pos = traj[frame_idx]
+
+        # update history and window
+        history.append(pos)
         window_buffer.append(pos)
         if len(window_buffer) > window:
             window_buffer.pop(0)
 
+        # update online scalers
         in_online_std.update(pos.reshape(1, -1))
+        
+        # detect sudden jumps
+        if len(history) > 1:
+            last_delta = np.linalg.norm(pos - history[-2])
+            if last_delta > sudden_change_thresh:
+                for esn in esns:
+                    if hasattr(esn, "res"):
+                        esn.res.reset_state()
+
+        # Prepare recent (standardized) input window
         X_recent = np.array(window_buffer[-adapt_window:])
         X_recent_s = in_online_std.transform(X_recent)
 
         all_preds = []
-        for esn in esns:
+        for i, esn in enumerate(esns):
             last_input = X_recent_s.copy()
             future_preds = []
             for _ in range(future_horizon):
@@ -174,8 +209,11 @@ def evaluate_v1(traj, warmup=5, window=20, n_models=10, future_horizon=20, seed=
                 last_pos = in_online_std.inverse_transform(last_input[-1].reshape(1, -1))[0]
                 next_pos = last_pos + delta
                 future_preds.append(next_pos)
+
+                # roll forward
                 last_input = np.roll(last_input, -1, axis=0)
                 last_input[-1] = in_online_std.transform(next_pos.reshape(1, -1))[0]
+
             all_preds.append(future_preds)
 
             # Adaptation
@@ -183,19 +221,54 @@ def evaluate_v1(traj, warmup=5, window=20, n_models=10, future_horizon=20, seed=
                 fit_len = min(delta_window, len(X_recent_s) - 1)
                 adapt_X = X_recent_s[-fit_len-1:-1]
                 adapt_Y = np.diff(X_recent_s[-fit_len-1:], axis=0)
-                adapt_Y_adj = np.clip(adapt_Y * adapt_damping, -err_clip, err_clip)
+
+                # predict the last standardized delta over this short window
+                try:
+                    pred_last_s = esn.run(adapt_X)[-1]
+                except Exception:
+                    pred_last_s = np.zeros((1, adapt_Y.shape[1]))
+
+                real_last = adapt_Y[-1].reshape(1, -1)
+                instantaneous_err = np.linalg.norm(real_last - pred_last_s)
+
+                # update running error + decide damping (boost vs nominal)
+                err_deques[i].append(instantaneous_err)
+                running_err = np.mean(err_deques[i]) if len(err_deques[i]) > 0 else 0.0
+
+
+                if boost_counters[i] > 0:
+                    damping = adapt_damping_boost
+                    boost_counters[i] -= 1
+                elif running_err > boost_error_thresh:
+                    damping = adapt_damping_boost
+                    boost_counters[i] = boost_frames - 1
+                else:
+                    damping = adapt_damping_nominal
+
+                # damp + clip the target deltas before partial_fit
+                adapt_Y_adj = np.clip(adapt_Y * damping, -err_clip, err_clip)
                 try:
                     esn.partial_fit(adapt_X, adapt_Y_adj)
                 except:
                     pass
 
-        if len(window_buffer) >= 2:
-            last_delta = np.array(window_buffer[-1]) - np.array(window_buffer[-2])
-            tg_online_std.update(last_delta.reshape(1, -1))
+                # clip readout weights and reservoir state (defensive checks)
+                if hasattr(esn, "W_out"):
+                    esn.W_out = np.clip(esn.W_out, -wout_clip, wout_clip)
+                if hasattr(esn, "res") and hasattr(esn.res, "state"):
+                    esn.res.state = np.clip(esn.res.state, -state_clip, state_clip)
+                if len(window_buffer) >= 2:
+                    last_delta = np.array(window_buffer[-1]) - np.array(window_buffer[-2])
+                    tg_online_std.update(last_delta.reshape(1, -1))
 
-        esn_avg = np.mean(np.array(all_preds), axis=0)
+        # --- compute average ESN prediction ---
+        if len(all_preds) > 0:
+            esn_avg = np.mean(np.array(all_preds), axis=0)
+        else:
+            esn_avg = np.empty((0, 2))
+
+        # --- error computation (using known ground truth) ---
         gt_future = traj[frame_idx + 1:frame_idx + 1 + future_horizon]
-
         if len(gt_future) >= future_horizon:
             err = np.mean(np.linalg.norm(esn_avg - gt_future, axis=1))
             if np.isfinite(err):
@@ -213,6 +286,7 @@ def evaluate_v2_kalman(traj, warmup=5, window=20, n_models=10, future_horizon=20
     esns = create_diverse_esns(n_models=n_models, base_units=25, seed=seed)
     kalman = SimpleKalmanFilter(dt=0.1, process_noise=0.1, measurement_noise=0.05)
 
+    history = traj[:warmup].tolist()
     warmup_buffer = traj[:warmup]
     X_warm = warmup_buffer[:-1]
     Y_warm = warmup_buffer[1:] - warmup_buffer[:-1]
@@ -233,16 +307,30 @@ def evaluate_v2_kalman(traj, warmup=5, window=20, n_models=10, future_horizon=20
     for pos in warmup_buffer:
         kalman.update(pos)
 
+    # --- Adaptation config ---
     adapt_window = 5
     delta_window = 6
-    adapt_damping = 0.35
+    sudden_change_thresh = 0.6
+    adapt_damping_nominal = 0.35
+    adapt_damping_boost = 1.0
+    boost_frames = 6
+    boost_error_thresh = 0.5
+    state_clip = 5.0
+    wout_clip = 8.0
     err_clip = 1.0
+
+    # per-ESN running error buffers and boost counters
+    err_deques = [deque(maxlen=8) for _ in esns]
+    boost_counters = [0 for _ in esns]
 
     errors = []
     window_buffer = list(warmup_buffer)
 
     for frame_idx in range(warmup, len(traj) - future_horizon):
         pos = traj[frame_idx]
+
+        # update history and window
+        history.append(pos)
         window_buffer.append(pos)
         if len(window_buffer) > window:
             window_buffer.pop(0)
@@ -250,13 +338,24 @@ def evaluate_v2_kalman(traj, warmup=5, window=20, n_models=10, future_horizon=20
         # Update Kalman
         kalman.update(pos)
 
+        # update online scalers
         in_online_std.update(pos.reshape(1, -1))
+        
+        # detect sudden jumps
+        if len(history) > 1:
+            last_delta = np.linalg.norm(pos - history[-2])
+            if last_delta > sudden_change_thresh:
+                for esn in esns:
+                    if hasattr(esn, "res"):
+                        esn.res.reset_state()
+
+        # Prepare recent (standardized) input window
         X_recent = np.array(window_buffer[-adapt_window:])
         X_recent_s = in_online_std.transform(X_recent)
 
         # ESN predictions
         all_preds = []
-        for esn in esns:
+        for i, esn in enumerate(esns):
             last_input = X_recent_s.copy()
             future_preds = []
             for _ in range(future_horizon):
@@ -268,8 +367,11 @@ def evaluate_v2_kalman(traj, warmup=5, window=20, n_models=10, future_horizon=20
                 last_pos = in_online_std.inverse_transform(last_input[-1].reshape(1, -1))[0]
                 next_pos = last_pos + delta
                 future_preds.append(next_pos)
+
+                # roll forward
                 last_input = np.roll(last_input, -1, axis=0)
                 last_input[-1] = in_online_std.transform(next_pos.reshape(1, -1))[0]
+
             all_preds.append(future_preds)
 
             # Adaptation
@@ -277,15 +379,45 @@ def evaluate_v2_kalman(traj, warmup=5, window=20, n_models=10, future_horizon=20
                 fit_len = min(delta_window, len(X_recent_s) - 1)
                 adapt_X = X_recent_s[-fit_len-1:-1]
                 adapt_Y = np.diff(X_recent_s[-fit_len-1:], axis=0)
-                adapt_Y_adj = np.clip(adapt_Y * adapt_damping, -err_clip, err_clip)
+
+                # predict the last standardized delta over this short window
+                try:
+                    pred_last_s = esn.run(adapt_X)[-1]
+                except Exception:
+                    pred_last_s = np.zeros((1, adapt_Y.shape[1]))
+
+                real_last = adapt_Y[-1].reshape(1, -1)
+                instantaneous_err = np.linalg.norm(real_last - pred_last_s)
+
+                # update running error + decide damping (boost vs nominal)
+                err_deques[i].append(instantaneous_err)
+                running_err = np.mean(err_deques[i]) if len(err_deques[i]) > 0 else 0.0
+
+
+                if boost_counters[i] > 0:
+                    damping = adapt_damping_boost
+                    boost_counters[i] -= 1
+                elif running_err > boost_error_thresh:
+                    damping = adapt_damping_boost
+                    boost_counters[i] = boost_frames - 1
+                else:
+                    damping = adapt_damping_nominal
+
+                # damp + clip the target deltas before partial_fit
+                adapt_Y_adj = np.clip(adapt_Y * damping, -err_clip, err_clip)
                 try:
                     esn.partial_fit(adapt_X, adapt_Y_adj)
                 except:
                     pass
 
-        if len(window_buffer) >= 2:
-            last_delta = np.array(window_buffer[-1]) - np.array(window_buffer[-2])
-            tg_online_std.update(last_delta.reshape(1, -1))
+                # clip readout weights and reservoir state (defensive checks)
+                if hasattr(esn, "W_out"):
+                    esn.W_out = np.clip(esn.W_out, -wout_clip, wout_clip)
+                if hasattr(esn, "res") and hasattr(esn.res, "state"):
+                    esn.res.state = np.clip(esn.res.state, -state_clip, state_clip)
+                if len(window_buffer) >= 2:
+                    last_delta = np.array(window_buffer[-1]) - np.array(window_buffer[-2])
+                    tg_online_std.update(last_delta.reshape(1, -1))
 
         esn_avg = np.mean(np.array(all_preds), axis=0)
 
